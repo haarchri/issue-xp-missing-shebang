@@ -1,0 +1,16 @@
+apiVersion: meta.pkg.crossplane.io/v1
+kind: Configuration
+metadata:
+  name: test
+  annotations:
+    meta.crossplane.io/maintainer: test
+    meta.crossplane.io/source: test
+    meta.crossplane.io/license: Apache-2.0
+    meta.crossplane.io/description: |
+      test
+    meta.crossplane.io/readme: |
+      test
+spec:
+  dependsOn:
+    - provider: xpkg.upbound.io/crossplane-contrib/provider-nop
+      version: ">=v0.2.0"

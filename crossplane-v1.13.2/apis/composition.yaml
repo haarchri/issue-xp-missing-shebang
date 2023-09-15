@@ -1,0 +1,45 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xacmedatabases.acme.com
+spec:
+  writeConnectionSecretsToNamespace: crossplane-system
+  compositeTypeRef:
+    apiVersion: acme.com/v1
+    kind: XAcmeDatabase
+  resources:
+    - name: NopResource
+      base:
+        apiVersion: nop.crossplane.io/v1alpha1
+        kind: NopResource
+        spec:
+          forProvider:
+            fields:
+              stringField: "cool"
+              combineField: "cooler"
+          writeConnectionSecretToRef:
+            namespace: crossplane-system
+      patches:
+        - type: CombineFromComposite
+          toFieldPath: spec.forProvider.fields.combineField
+          combine:
+            strategy: string
+            variables:
+              - fromFieldPath: spec.storageGB
+              - fromFieldPath: spec.userStr
+            string:
+              fmt: |
+                Content-Type: text/x-shellscript
+                #!/bin/bash -xe
+                yum update -y
+                yum install -y amazon-ssm-agent
+                sudo systemctl enable amazon-ssm-agent
+                sudo systemctl start amazon-ssm-agent
+                # Bootstrap and join the cluster
+                /etc/eks/bootstrap.sh --storageGB '%d' --userStr '%s'
+        - fromFieldPath: "metadata.uid"
+          toFieldPath: "spec.writeConnectionSecretToRef.name"
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-nop"
